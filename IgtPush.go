@@ -14,6 +14,7 @@ import (
 	"io"
 	"encoding/hex"
 	"github.com/wayhood/gogetui/igetui"
+	"github.com/snluu/uuid"
 )
 
 type IGeTui struct{
@@ -150,7 +151,31 @@ func (this *IGeTui) connect() bool {
 func (this *IGeTui) PushMessageToSingle(message igetui.IGtSingleMessage, tartget igetui.Target) map[string]interface{} {
 	params := map[string]interface{}{}
 
-	params["requestId"] = "AAA"
+	var id uuid.UUID = uuid.Rand()
+	params["requestId"] = id.Hex()
+	params["action"] = "pushMessageToSingleAction"
+	params["appkey"] = this.AppKey
+	transparent := message.Data.GetTransparent()
+	// fmt.Println(transparent)
+	byteArray, _ := proto.Marshal(transparent)
+	params["clientData"] = base64.StdEncoding.EncodeToString(byteArray)
+	params["transmissionContent"] = message.Data.GetTransmissionContent()
+	params["isOffline"] = message.IsOffline
+	params["offlineExpireTime"] = message.OfflineExpireTime
+	params["appId"] = tartget.AppId
+	params["clientId"] = tartget.ClientId
+	params["type"] = 2
+	params["pushType"] = message.Data.GetPushType()
+	//增加pushNetWorkType参数(0:不限;1:wifi;)
+	params["pushNetWorkType"] = message.PushNetWorkType
+	return this.HttpPostJson(params)
+
+}
+
+func (this *IGeTui) PushMessageToSingleWithRequestId(message igetui.IGtSingleMessage, tartget igetui.Target, requestId string) map[string]interface{} {
+	params := map[string]interface{}{}
+	
+	params["requestId"] = requestId
 	params["action"] = "pushMessageToSingleAction"
 	params["appkey"] = this.AppKey
 	transparent := message.Data.GetTransparent()
